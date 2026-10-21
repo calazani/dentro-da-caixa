@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Dentro da caixa - ERP Gastronômico</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eefdf5',
+              100: '#d7fbe8',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+            dark: {
+              bg: '#0b1320',
+              card: '#131e32',
+              input: '#1a2942',
+              border: '#233756'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b1320; }
+    ::-webkit-scrollbar-thumb { background: #233756; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .subnav-btn-active { background-color: #10b981; color: #ffffff; }
+  </style>
+</head>
+<body class="bg-dark-bg text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white pb-24 md:pb-8">
+
+  <!-- ================= TELA DE LOGIN ================= -->
+  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-dark-bg p-4">
+    <div class="bg-dark-card border border-dark-border rounded-2xl w-full max-w-md p-8 shadow-2xl relative overflow-hidden">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-500/20 text-brand-500 mb-3 border border-brand-500/30">
+          <i class="fa-solid fa-box-open text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight text-white">Dentro da caixa</h1>
+        <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Sistema de Gestão Integrada</p>
+      </div>
+
+      <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuário</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user text-sm"></i></span>
+            <input type="text" id="loginUser" required class="w-full bg-dark-input border border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Senha</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-sm"></i></span>
+            <input type="password" id="loginPass" required class="w-full bg-dark-input border border-dark-border rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500 transition">
+          </div>
+        </div>
+
+        <div id="loginError" class="text-rose-400 text-xs hidden flex items-center gap-1.5 font-medium pt-1">
+          <i class="fa-solid fa-circle-exclamation"></i> Usuário ou senha incorretos.
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 active:scale-[0.99] transition font-bold text-sm rounded-xl text-white shadow-lg shadow-brand-500/20 mt-2">
+          Entrar no Sistema
+        </button>
+
+        <p class="text-[11px] text-center text-slate-500 mt-4">
+          Acesso padrão inicial: <strong>admin</strong> | <strong>123</strong>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= BARRA DE TOPO & MÓDULOS PRINCIPAIS ================= -->
+  <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
+      
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchModule('financeiro')">
+          <div class="w-9 h-9 rounded-xl bg-brand-500/20 text-brand-500 flex items-center justify-center border border-brand-500/30">
+            <i class="fa-solid fa-box-open text-base"></i>
+          </div>
+          <div class="leading-tight">
+            <span class="font-black text-white text-base tracking-tight block">Dentro da caixa</span>
+            <span id="currentLoggedUserBadge" class="text-[10px] text-brand-500 uppercase tracking-widest font-bold">Admin</span>
+          </div>
+        </div>
+
+        <nav class="hidden md:flex items-center space-x-1" id="mainModuleNav">
+          <button id="modBtn-financeiro" onclick="switchModule('financeiro')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-dark-input">
+            <i class="fa-solid fa-wallet text-amber-400"></i> Financeiro
+          </button>
+          <button id="modBtn-estoque" onclick="switchModule('estoque')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-dark-input">
+            <i class="fa-solid fa-boxes-stacked text-emerald-400"></i> Estoque & Produção
+          </button>
+          <button id="modBtn-relatorios" onclick="switchModule('relatorios')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-dark-input">
+            <i class="fa-solid fa-chart-pie text-cyan-400"></i> Relatórios
+          </button>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="openSyncModal()" title="Sincronização Google Sheets" class="p-2 rounded-xl bg-dark-input border border-dark-border text-slate-300 hover:text-brand-500 text-xs flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-cloud" id="cloudIcon"></i>
+          <span class="hidden sm:inline text-[11px] font-medium" id="cloudStatusText">Local</span>
+        </button>
+
+        <button onclick="openSettingsModal()" title="Configurações e Usuários" class="p-2 rounded-xl bg-dark-input border border-dark-border text-slate-300 hover:text-brand-500 text-xs transition">
+          <i class="fa-solid fa-gear text-sm"></i>
+        </button>
+
+        <button onclick="handleLogout()" title="Sair do Sistema" class="p-2 rounded-xl bg-dark-input border border-dark-border text-slate-400 hover:text-rose-400 text-xs transition">
+          <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="md:hidden border-t border-dark-border px-3 py-1.5 flex justify-around bg-dark-bg/60 text-xs font-semibold">
+      <button id="modMobBtn-financeiro" onclick="switchModule('financeiro')" class="py-1 px-2 text-slate-400">Financeiro</button>
+      <button id="modMobBtn-estoque" onclick="switchModule('estoque')" class="py-1 px-2 text-slate-400">Estoque</button>
+      <button id="modMobBtn-relatorios" onclick="switchModule('relatorios')" class="py-1 px-2 text-slate-400">Relatórios</button>
+    </div>
+  </header>
+
+  <!-- ================= CONTEÚDO PRINCIPAL ================= -->
+  <main class="max-w-7xl w-full mx-auto px-3 sm:px-4 py-5 flex-1">
+
+    <!-- MÓDULO 1: FINANCEIRO -->
+    <div id="module-financeiro" class="space-y-5">
+      <div class="flex items-center justify-between border-b border-dark-border pb-2 overflow-x-auto gap-2">
+        <div class="flex items-center gap-1 text-xs font-bold">
+          <button onclick="switchFinSubTab('dash')" id="finSubBtn-dash" class="px-3 py-1.5 rounded-lg subnav-btn-active transition">Dashboard</button>
+          <button onclick="switchFinSubTab('contas')" id="finSubBtn-contas" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Contas a Pagar</button>
+          <button onclick="switchFinSubTab('bancos')" id="finSubBtn-bancos" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Gerenciar Bancos</button>
+          <button onclick="switchFinSubTab('metas')" id="finSubBtn-metas" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Metas & Vendas</button>
+          <button onclick="switchFinSubTab('bonus')" id="finSubBtn-bonus" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Bônus</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openNovoBoletoModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Novo Boleto</span>
+          </button>
+          <button onclick="openImportXmlModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-file-code"></i> <span class="hidden sm:inline">Importar XML</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD FINANCEIRO -->
+      <div id="finTab-dash" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-dark-card border border-dark-border p-4 rounded-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Saldo Consolidado</span>
+            <div class="text-2xl font-black text-emerald-400 mt-1" id="dashSaldoConsolidado">R$ 0,00</div>
+            <div class="text-[10px] text-slate-400 mt-1">Total em Caixa/Bancos - A Pagar</div>
+          </div>
+
+          <div class="bg-dark-card border border-dark-border p-4 rounded-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Disponível em Bancos</span>
+            <div class="text-2xl font-black text-sky-400 mt-1" id="dashTotalBancos">R$ 0,00</div>
+            <div class="text-[10px] text-slate-400 mt-1">Soma de saldos em conta</div>
+          </div>
+
+          <div class="bg-dark-card border border-dark-border p-4 rounded-xl">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total a Pagar (Aberto)</span>
+            <div class="text-2xl font-black text-rose-400 mt-1" id="dashTotalAPagar">R$ 0,00</div>
+            <div class="text-[10px] text-slate-400 mt-1" id="dashContasVencendoHoje">0 contas vencem hoje</div>
+          </div>
+
+          <div class="bg-dark-card border border-dark-border p-4 rounded-xl">
+            <div class="flex justify-between items-start">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Próx. Repasse iFood</span>
+              <span class="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded font-bold" id="dashIfoodDate">Qua</span>
+            </div>
+            <div class="text-2xl font-black text-white mt-1" id="dashIfoodRepasse">R$ 0,00</div>
+            <div class="text-[10px] mt-1 text-slate-400" id="dashIfoodContasComparativo">A pagar até a data: R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="bg-dark-card border border-dark-border rounded-xl p-4 lg:col-span-2">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Posição por Conta / Banco</h3>
+              <button onclick="switchFinSubTab('bancos')" class="text-xs text-brand-500 font-semibold">+ Gerenciar Bancos</button>
+            </div>
+            <div id="dashBancosList" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+          </div>
+
+          <div class="bg-dark-card border border-dark-border rounded-xl p-4 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Contas & Parciais</h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center bg-dark-input p-2 rounded-lg">
+                <span class="text-slate-400">Reserva de Emergência:</span>
+                <span class="font-bold text-emerald-400" id="dashReservaVal">R$ 0,00</span>
+              </div>
+              <div class="flex justify-between items-center bg-dark-input p-2 rounded-lg">
+                <span class="text-slate-400">Parcial Fatura Cartão:</span>
+                <span class="font-bold text-rose-400" id="dashFaturaCartaoVal">R$ 0,00</span>
+              </div>
+              <div class="flex justify-between items-center bg-dark-input p-2 rounded-lg">
+                <span class="text-slate-400">Parcial Repasse iFood:</span>
+                <span class="font-bold text-red-400" id="dashParcialIfoodVal">R$ 0,00</span>
+              </div>
+            </div>
+
+            <button onclick="openEditarParciaisModal()" class="w-full py-1.5 bg-dark-input hover:bg-slate-700 border border-dark-border text-slate-300 text-xs font-semibold rounded-lg transition">
+              Atualizar Parciais & Reserva
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTAS A PAGAR -->
+      <div id="finTab-contas" class="hidden space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-dark-card border border-dark-border p-3 rounded-xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filtroStatusContas" onchange="renderContasPagar()" class="bg-dark-input border border-dark-border text-xs rounded-lg px-2.5 py-1.5 text-white">
+              <option value="todos">Todos</option>
+              <option value="Futuro" selected>Somente Pendentes</option>
+              <option value="Pago">Somente Pagos</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="buscaFornecedorContas" oninput="renderContasPagar()" placeholder="Buscar fornecedor..." class="bg-dark-input border border-dark-border text-xs rounded-lg px-3 py-1.5 text-white">
+            <button onclick="exportarContasCSV()" class="bg-dark-input border border-dark-border text-xs px-2.5 py-1.5 rounded-lg text-slate-300 font-semibold">CSV</button>
+          </div>
+        </div>
+
+        <div class="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-dark-input text-slate-300 uppercase font-bold text-[10px]">
+                <tr>
+                  <th class="py-2.5 px-3">Vencimento</th>
+                  <th class="py-2.5 px-3">Valor</th>
+                  <th class="py-2.5 px-3">Fornecedor</th>
+                  <th class="py-2.5 px-3">Descrição</th>
+                  <th class="py-2.5 px-3">Banco Saída</th>
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaContasPagarBody" class="divide-y divide-dark-border"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GERENCIAR BANCOS -->
+      <div id="finTab-bancos" class="hidden space-y-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="text-sm font-bold text-white">Bancos e Caixas</h3>
+            <p class="text-xs text-slate-400">Adicione ou exclua contas bancárias e dinheiro físico.</p>
+          </div>
+          <button onclick="openNovoBancoModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Novo Banco</button>
+        </div>
+        <div id="listaBancosGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- METAS E VENDAS -->
+      <div id="finTab-metas" class="hidden space-y-4">
+        <div class="bg-dark-card border border-dark-border p-4 rounded-xl">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Configuração de Metas</h3>
+            <button onclick="salvarConfigMetas()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-3 py-1 rounded-lg">Salvar Metas</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Meta Faturamento Mensal (R$)</label>
+              <input type="number" id="cfgMetaFaturamentoMensal" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Meta Boxes Mensal (Qtd)</label>
+              <input type="number" id="cfgMetaBoxesMensal" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-white">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Meta Faturamento Anual (R$)</label>
+              <input type="number" id="cfgMetaFaturamentoAnual" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-white">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-dark-card border border-dark-border rounded-xl p-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Histórico Mensal de Vendas</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-dark-input text-slate-300 uppercase font-bold text-[10px]">
+                <tr>
+                  <th class="py-2 px-3">Mês</th>
+                  <th class="py-2 px-3">Boxes Vendidos</th>
+                  <th class="py-2 px-3">Faturamento (R$)</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaMetasVendasBody" class="divide-y divide-dark-border"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- BÔNUS -->
+      <div id="finTab-bonus" class="hidden space-y-4">
+        <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-xl mx-auto space-y-4">
+          <div class="border-b border-dark-border pb-3">
+            <h3 class="text-sm font-bold text-white">Calculadora de Bônus Operacional</h3>
+            <p class="text-xs text-slate-400 mt-1">Fórmula: <code>Boxes * (220 / 1400) - (Deduções / 2)</code></p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Quantidade de Boxes</label>
+              <input type="number" id="calcBonusBoxes" oninput="calcularBonus()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-white font-bold">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Deduções do Bônus (R$)</label>
+              <input type="number" id="calcBonusDeducoes" oninput="calcularBonus()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-white font-bold">
+            </div>
+          </div>
+          <div class="bg-dark-input border border-dark-border rounded-xl p-4 text-center mt-4">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Valor Final do Bônus</span>
+            <div class="text-3xl font-black text-emerald-400 mt-1" id="calcBonusResultado">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÓDULO 2: ESTOQUE -->
+    <div id="module-estoque" class="hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-dark-border pb-2 overflow-x-auto gap-2">
+        <div class="flex items-center gap-1 text-xs font-bold">
+          <button onclick="switchEstSubTab('itens')" id="estSubBtn-itens" class="px-3 py-1.5 rounded-lg subnav-btn-active transition">Itens</button>
+          <button onclick="switchEstSubTab('inventario')" id="estSubBtn-inventario" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Contagem (Inventário)</button>
+          <button onclick="switchEstSubTab('fichas')" id="estSubBtn-fichas" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Fichas Técnicas</button>
+          <button onclick="switchEstSubTab('producao')" id="estSubBtn-producao" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Produção</button>
+          <button onclick="switchEstSubTab('vendas')" id="estSubBtn-vendas" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Lançar Vendas</button>
+          <button onclick="switchEstSubTab('compras')" id="estSubBtn-compras" class="px-3 py-1.5 rounded-lg bg-dark-input text-slate-300 hover:text-white transition">Sugestão de Compras</button>
+        </div>
+        <button onclick="openNovoItemModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Novo Item</button>
+      </div>
+
+      <!-- ITENS -->
+      <div id="estTab-itens" class="space-y-4">
+        <div class="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-dark-input text-slate-300 uppercase font-bold text-[10px]">
+                <tr>
+                  <th class="py-2.5 px-3">Item</th>
+                  <th class="py-2.5 px-3">Categoria</th>
+                  <th class="py-2.5 px-3">Unidade</th>
+                  <th class="py-2.5 px-3">Qtd em Caixa</th>
+                  <th class="py-2.5 px-3">Estoque Atual</th>
+                  <th class="py-2.5 px-3">Custo Médio</th>
+                  <th class="py-2.5 px-3 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaItensEstoqueBody" class="divide-y divide-dark-border"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTÁRIO (CONTAGEM MISTA) -->
+      <div id="estTab-inventario" class="hidden space-y-4">
+        <div class="bg-dark-card border border-dark-border p-4 rounded-xl flex justify-between items-center">
+          <div>
+            <h3 class="text-sm font-bold text-white">Contagem Física de Estoque</h3>
+            <p class="text-xs text-slate-400">Conte caixas fechadas e unidades avulsas.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="operadorInventarioSelect" class="bg-dark-input border border-dark-border text-xs rounded-lg px-2.5 py-1.5 text-white"></select>
+            <button onclick="salvarInventarioCompleto()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Salvar Contagem</button>
+          </div>
+        </div>
+        <div class="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-dark-input text-slate-300 uppercase font-bold text-[10px]">
+              <tr>
+                <th class="py-2.5 px-3">Item</th>
+                <th class="py-2.5 px-3">Saldo Atual</th>
+                <th class="py-2.5 px-3">Caixas</th>
+                <th class="py-2.5 px-3">Avulsos</th>
+                <th class="py-2.5 px-3">Novo Total</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaInventarioBody" class="divide-y divide-dark-border"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FICHAS TÉCNICAS -->
+      <div id="estTab-fichas" class="hidden space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-bold text-white">Fichas Técnicas & Cardápio</h3>
+          <button onclick="openNovaFichaModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Nova Ficha</button>
+        </div>
+        <div id="gridFichasTecnicas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- PRODUÇÃO / TRANSFORMAÇÃO -->
+      <div id="estTab-producao" class="hidden space-y-4">
+        <div class="bg-dark-card border border-dark-border p-6 rounded-xl max-w-xl mx-auto space-y-4">
+          <h3 class="text-sm font-bold text-white">Registrar Preparo / Sub-receita</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Ficha de Preparo</label>
+              <select id="prodFichaSelect" onchange="atualizarPreviewProducao()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-white"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1">Rendimento Produzido</label>
+                <input type="number" id="prodRendimentoQtd" oninput="atualizarPreviewProducao()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-white">
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Operador Responsável</label>
+                <select id="prodOperadorSelect" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-white"></select>
+              </div>
+            </div>
+            <div id="prodPreviewIngredientes" class="bg-dark-input p-3 rounded-lg text-slate-300"></div>
+            <button onclick="executarProducao()" class="w-full py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-lg">Concluir Produção</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VENDAS EM LOTE -->
+      <div id="estTab-vendas" class="hidden space-y-4">
+        <div class="bg-dark-card border border-dark-border p-4 rounded-xl space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-white">Lançar Lote de Vendas</h3>
+            <select id="vendaOperadorSelect" class="bg-dark-input border border-dark-border text-xs rounded-lg px-2.5 py-1 text-white"></select>
+          </div>
+          <div id="listaProdutosFinaisVenda" class="space-y-3"></div>
+          <button onclick="processarLoteVendas()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-lg">Baixar Estoque por Vendas</button>
+        </div>
+      </div>
+
+      <!-- SUGESTÃO DE COMPRAS -->
+      <div id="estTab-compras" class="hidden space-y-4">
+        <h3 class="text-sm font-bold text-white">Sugestão de Compras (Ponto de Pedido)</h3>
+        <div id="gridSugestaoCompras" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- MÓDULO 3: RELATÓRIOS -->
+    <div id="module-relatorios" class="hidden space-y-5">
+      <div class="bg-dark-card border border-dark-border p-4 rounded-xl">
+        <h3 class="text-sm font-bold text-white mb-3">Movimentações de Estoque & Auditoria</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-dark-input text-slate-300 uppercase font-bold text-[10px]">
+              <tr>
+                <th class="py-2 px-3">Data</th>
+                <th class="py-2 px-3">Tipo</th>
+                <th class="py-2 px-3">Descrição</th>
+                <th class="py-2 px-3">Qtd</th>
+                <th class="py-2 px-3">Operador</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaRelMovimentacoesBody" class="divide-y divide-dark-border"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: DAR BAIXA EM BOLETO -->
+  <div id="modalBaixaBoleto" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 hidden">
+    <div class="bg-dark-card border border-dark-border rounded-xl w-full max-w-sm p-5 space-y-4">
+      <h3 class="text-sm font-bold text-white">Confirmar Pagamento</h3>
+      <div class="text-xs space-y-2">
+        <div class="bg-dark-input p-3 rounded-lg font-bold text-white text-sm" id="baixaInfoTxt"></div>
+        <div>
+          <label class="block text-slate-400 mb-1">De qual banco saiu o dinheiro?</label>
+          <select id="baixaBancoSelect" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-white"></select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modalBaixaBoleto')" class="px-3 py-2 bg-dark-input text-slate-300 rounded-lg text-xs">Cancelar</button>
+        <button onclick="confirmarBaixaBoleto()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-lg">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR XML -->
+  <div id="modalImportXml" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 hidden">
+    <div class="bg-dark-card border border-dark-border rounded-xl w-full max-w-xl p-5 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-dark-border pb-2">
+        <h3 class="text-sm font-bold text-white">Importar XML da Nota Fiscal</h3>
+        <button onclick="closeModal('modalImportXml')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3 text-xs overflow-y-auto">
+        <input type="file" id="xmlFileInput" accept=".xml" onchange="processarArquivoXML(event)" class="w-full text-slate-300">
+        <div id="xmlPreviewArea" class="hidden space-y-3">
+          <div class="bg-dark-input p-3 rounded-lg text-white">
+            Fornecedor: <strong id="xmlFornecedorTxt"></strong> | Valor: <strong id="xmlValorTotalTxt" class="text-emerald-400"></strong>
+          </div>
+          <table class="w-full text-xs text-left">
+            <tbody id="xmlItensTbody" class="divide-y divide-dark-border"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-dark-border">
+        <button onclick="closeModal('modalImportXml')" class="px-3 py-2 bg-dark-input text-slate-300 rounded-lg text-xs">Cancelar</button>
+        <button id="btnConfirmarXml" onclick="confirmarImportacaoXML()" disabled class="px-4 py-2 bg-brand-500 text-white font-bold text-xs rounded-lg disabled:opacity-50">Confirmar Entrada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AJUSTES & EQUIPE -->
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 hidden">
+    <div class="bg-dark-card border border-dark-border rounded-xl w-full max-w-md p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-dark-border pb-2">
+        <h3 class="text-sm font-bold text-white">Ajustes & Usuários</h3>
+        <button onclick="closeModal('modalSettings')" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-2 text-xs">
+        <h4 class="font-bold text-slate-300">Operadores de Estoque:</h4>
+        <div class="flex gap-2">
+          <input type="text" id="novoOperadorNome" placeholder="Novo nome..." class="bg-dark-input border border-dark-border rounded px-2 py-1 text-white flex-1">
+          <button onclick="adicionarOperador()" class="bg-brand-500 text-white font-bold px-3 py-1 rounded">+ Add</button>
+        </div>
+        <div id="operadoresTagsContainer" class="flex flex-wrap gap-1 pt-1"></div>
+      </div>
+      <div class="border-t border-dark-border pt-3 flex justify-between">
+        <button onclick="exportarBackupJSON()" class="bg-dark-input text-xs px-3 py-1.5 rounded text-slate-300">Baixar Backup .JSON</button>
+        <button onclick="zerarSistemaConfirm()" class="bg-rose-950 text-rose-300 border border-rose-800 text-xs px-3 py-1.5 rounded">Zerar Tudo</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_DATA = {
+      config: {
+        metaFaturamentoMensal: 0,
+        metaBoxesMensal: 0,
+        metaFaturamentoAnual: 0,
+        dataIfoodRepasse: '',
+        valorParcialIfood: 0,
+        valorFaturaCartao: 0,
+        reservaEmergencial: 0,
+        googleScriptUrl: ''
+      },
+      bancos: [],
+      contasPagar: [],
+      metasMensais: [
+        { mes: 'Janeiro', boxes: 0, faturamento: 0 },
+        { mes: 'Fevereiro', boxes: 0, faturamento: 0 },
+        { mes: 'Março', boxes: 0, faturamento: 0 },
+        { mes: 'Abril', boxes: 0, faturamento: 0 },
+        { mes: 'Maio', boxes: 0, faturamento: 0 },
+        { mes: 'Junho', boxes: 0, faturamento: 0 },
+        { mes: 'Julho', boxes: 0, faturamento: 0 },
+        { mes: 'Agosto', boxes: 0, faturamento: 0 },
+        { mes: 'Setembro', boxes: 0, faturamento: 0 },
+        { mes: 'Outubro', boxes: 0, faturamento: 0 },
+        { mes: 'Novembro', boxes: 0, faturamento: 0 },
+        { mes: 'Dezembro', boxes: 0, faturamento: 0 }
+      ],
+      categoriasEstoque: ['Insumos / Carnes', 'Mercearia / Molhos', 'Embalagens / Boxes', 'Bebidas'],
+      operadores: ['Admin'],
+      itensEstoque: [],
+      fichasTecnicas: [],
+      deParaMemoria: {},
+      movimentacoes: [],
+      usuarios: [
+        { id: '1', login: 'admin', pass: '123', perms: { fin: true, est: true, rel: true } }
+      ]
+    };
+
+    let appData = null;
+    let currentUser = null;
+    let boletoParaBaixaId = null;
+    let xmlDadosTemporarios = null;
+
+    function initApp() {
+      const saved = localStorage.getItem('dentro_da_caixa_erp_data');
+      appData = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+      const session = sessionStorage.getItem('dentro_da_caixa_session');
+      if (session) {
+        currentUser = JSON.parse(session);
+        document.getElementById('loginScreen').classList.add('hidden');
+        renderAppHeader();
+        switchModule('financeiro');
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('dentro_da_caixa_erp_data', JSON.stringify(appData));
+    }
+
+    function handleLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value.trim();
+      const user = appData.usuarios.find(x => x.login === u && x.pass === p);
+      if (user) {
+        currentUser = user;
+        sessionStorage.setItem('dentro_da_caixa_session', JSON.stringify(user));
+        document.getElementById('loginScreen').classList.add('hidden');
+        renderAppHeader();
+        switchModule('financeiro');
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('dentro_da_caixa_session');
+      location.reload();
+    }
+
+    function renderAppHeader() {
+      if (!currentUser) return;
+      document.getElementById('currentLoggedUserBadge').innerText = currentUser.login.toUpperCase();
+    }
+
+    function switchModule(mod) {
+      ['financeiro', 'estoque', 'relatorios'].forEach(m => {
+        document.getElementById(`module-${m}`).classList.toggle('hidden', m !== mod);
+      });
+      if (mod === 'financeiro') renderDashboardFinanceiro();
+      if (mod === 'estoque') renderItensEstoque();
+      if (mod === 'relatorios') gerarRelatorios();
+    }
+
+    function switchFinSubTab(sub) {
+      ['dash', 'contas', 'bancos', 'metas', 'bonus'].forEach(s => {
+        document.getElementById(`finTab-${s}`).classList.toggle('hidden', s !== sub);
+        document.getElementById(`finSubBtn-${s}`).classList.toggle('subnav-btn-active', s === sub);
+      });
+      if (sub === 'dash') renderDashboardFinanceiro();
+      if (sub === 'contas') renderContasPagar();
+      if (sub === 'bancos') renderListaBancos();
+      if (sub === 'metas') renderTabelaMetasVendas();
+    }
+
+    function switchEstSubTab(sub) {
+      ['itens', 'inventario', 'fichas', 'producao', 'vendas', 'compras'].forEach(s => {
+        document.getElementById(`estTab-${s}`).classList.toggle('hidden', s !== sub);
+        document.getElementById(`estSubBtn-${s}`).classList.toggle('subnav-btn-active', s === sub);
+      });
+      if (sub === 'itens') renderItensEstoque();
+      if (sub === 'inventario') renderTelaInventario();
+      if (sub === 'fichas') renderFichasTecnicasGrid();
+      if (sub === 'producao') setupTelaProducao();
+      if (sub === 'vendas') setupTelaVendas();
+      if (sub === 'compras') renderSugestaoCompras();
+    }
+
+    const formatCurrency = (val) => Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    function renderDashboardFinanceiro() {
+      const totalBancos = appData.bancos.reduce((acc, b) => acc + Number(b.saldo || 0), 0);
+      document.getElementById('dashTotalBancos').innerText = formatCurrency(totalBancos);
+      
+      const contasAbertas = appData.contasPagar.filter(c => c.status !== 'Pago');
+      const totalAPagar = contasAbertas.reduce((acc, c) => acc + Number(c.valor || 0), 0);
+      document.getElementById('dashTotalAPagar').innerText = formatCurrency(totalAPagar);
+
+      const reserva = Number(appData.config.reservaEmergencial || 0);
+      const saldoConsolidado = (totalBancos + reserva) - totalAPagar;
+      document.getElementById('dashSaldoConsolidado').innerText = formatCurrency(saldoConsolidado);
+
+      document.getElementById('dashReservaVal').innerText = formatCurrency(reserva);
+      document.getElementById('dashFaturaCartaoVal').innerText = formatCurrency(appData.config.valorFaturaCartao);
+      document.getElementById('dashParcialIfoodVal').innerText = formatCurrency(appData.config.valorParcialIfood);
+
+      const bancosGrid = document.getElementById('dashBancosList');
+      bancosGrid.innerHTML = appData.bancos.map(b => `
+        <div class="bg-dark-input p-2.5 rounded-lg border border-dark-border">
+          <span class="text-[11px] text-slate-400 block">${b.nome}</span>
+          <span class="text-sm font-bold text-white">${formatCurrency(b.saldo)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderContasPagar() {
+      const tbody = document.getElementById('tabelaContasPagarBody');
+      tbody.innerHTML = appData.contasPagar.map(c => `
+        <tr class="hover:bg-dark-input/40">
+          <td class="py-2.5 px-3">${c.vencimento}</td>
+          <td class="py-2.5 px-3 font-bold text-rose-400">${formatCurrency(c.valor)}</td>
+          <td class="py-2.5 px-3 text-white font-semibold">${c.fornecedor}</td>
+          <td class="py-2.5 px-3 text-slate-400">${c.descricao || '-'}</td>
+          <td class="py-2.5 px-3 text-indigo-300">${c.bancoPago || 'A definir'}</td>
+          <td class="py-2.5 px-3">${c.status}</td>
+          <td class="py-2.5 px-3 text-right">
+            ${c.status !== 'Pago' ? `<button onclick="iniciarBaixaBoleto('${c.id}')" class="px-2 py-1 bg-emerald-600 rounded text-[11px] font-bold">Pagar</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderListaBancos() {
+      const container = document.getElementById('listaBancosGrid');
+      container.innerHTML = appData.bancos.map(b => `
+        <div class="bg-dark-card border border-dark-border p-4 rounded-xl flex justify-between items-center">
+          <div><h4 class="font-bold text-white">${b.nome}</h4><span class="text-xs text-emerald-400 font-bold">${formatCurrency(b.saldo)}</span></div>
+        </div>
+      `).join('');
+    }
+
+    function renderTabelaMetasVendas() {
+      const tbody = document.getElementById('tabelaMetasVendasBody');
+      tbody.innerHTML = appData.metasMensais.map((m, idx) => `
+        <tr>
+          <td class="py-2 px-3 font-semibold text-white">${m.mes}</td>
+          <td class="py-2 px-3"><input type="number" value="${m.boxes}" onchange="appData.metasMensais[${idx}].boxes = Number(this.value); saveData();" class="w-24 bg-dark-input border border-dark-border rounded px-2 py-1 text-white"></td>
+          <td class="py-2 px-3"><input type="number" value="${m.faturamento}" onchange="appData.metasMensais[${idx}].faturamento = Number(this.value); saveData();" class="w-32 bg-dark-input border border-dark-border rounded px-2 py-1 text-white"></td>
+        </tr>
+      `).join('');
+    }
+
+    function calcularBonus() {
+      const boxes = parseFloat(document.getElementById('calcBonusBoxes').value) || 0;
+      const deducoes = parseFloat(document.getElementById('calcBonusDeducoes').value) || 0;
+      const bonus = (boxes * (220 / 1400)) - (deducoes / 2);
+      document.getElementById('calcBonusResultado').innerText = formatCurrency(Math.max(0, bonus));
+    }
+
+    function renderItensEstoque() {
+      const tbody = document.getElementById('tabelaItensEstoqueBody');
+      tbody.innerHTML = appData.itensEstoque.map(it => `
+        <tr>
+          <td class="py-2.5 px-3 font-semibold text-white">${it.nome}</td>
+          <td class="py-2.5 px-3 text-slate-400">${it.categoria}</td>
+          <td class="py-2.5 px-3 text-slate-300">${it.unidade}</td>
+          <td class="py-2.5 px-3">${it.qtdCaixa || '-'}</td>
+          <td class="py-2.5 px-3 font-bold text-emerald-400">${it.estoqueAtual} ${it.unidade}</td>
+          <td class="py-2.5 px-3">${formatCurrency(it.custoMedio)}</td>
+          <td class="py-2.5 px-3 text-right">
+            <button onclick="appData.itensEstoque = appData.itensEstoque.filter(x => x.id !== '${it.id}'); saveData(); renderItensEstoque();" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function openSettingsModal() { document.getElementById('modalSettings').classList.remove('hidden'); }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
